@@ -1,8 +1,11 @@
 // Include the ESP8266 WiFi library. (Works a lot like the
 // Arduino WiFi library.)
 #include <ESP8266WiFi.h>
-// Include the SparkFun Phant library.
-#include <Phant.h>
+// Include the ESP8266 HTTPClient library.
+#include <ESP8266HTTPClient.h>
+// Include the ArduinoJson library to encode data in JSON 
+#include <ArduinoJson.h>
+
 // Include the SparkFun BME280 library.
 #include "SparkFunBME280.h"
 
@@ -38,7 +41,9 @@ const int DIGITAL_PIN = 12; // Digital pin to be read
 /////////////////
 // Server info //
 /////////////////
-const char ServerHost[] = "frozencreeks.com";
+//const char ServerHost[] = "frozencreeks.com";
+const char ServerHost[] = "http://10.0.0.9";
+const int httpPort = 3000;
 
 /////////////////
 // Post Timing //
@@ -53,11 +58,15 @@ void setup()
   initAtmosphereSensor();
   connectWiFi();
   digitalWrite(LED_PIN, HIGH);
-  /*while (postToServer() != 1)
+  readSensorData();   // Read Sensor data and pass to WeatherStation
+  printSensorData();  // Print the sensor data to serial
+  delay(100);
+  while (postToServer() != 1)
   {
     delay(100);
   }
   digitalWrite(LED_PIN, LOW);
+  /*
   // deepSleep time is defined in microseconds. Multiply
   // seconds by 1e6 
   //ESP.deepSleep(sleepTimeS * 1000000);
@@ -73,12 +82,12 @@ void loop()
     readSensorData();   // Read Sensor data and pass to WeatherStation
     printSensorData();  // Print the sensor data to serial
     delay(100);
-    if (postToServer())
+    if (postToServer()) {
       lastPost = millis();
       Serial.println(lastPost);
+    }
     else
       delay(100);
-   
   }
 
 }
@@ -205,54 +214,48 @@ int postToServer()
                  String(mac[WL_MAC_ADDR_LENGTH - 1], HEX);
   macID.toUpperCase();
   String postedID = "Thing-" + macID;
-  
-  // Add the four field/value pairs defined by our stream:
-  String data = String("");
-  data += "station_id=" + postedID;
-  data += "&tempf=" + String(tempF);
-  data += "&tempc=" + String(tempC);
-  data += "&humidity=" + String(humidity);
-  data += "&pressure=" + String(pressure);
-  data += "&altitude_ft=" + String(altitudeFeet);
-  data += "&altitude_m=" + String(altitudeMeters);
-  data += "&time=" + String(millis()/1000);
 
-  //Serial.println(data);
+  //Declaring static JSON buffer
+  StaticJsonBuffer<300> JSONbuffer;
+  JsonObject& JSONdata = JSONbuffer.createObject();
+
+  // Build the JSON data by adding the field/value pairs defined by our stream:
+  JSONdata["station_id"] = postedID;
+  JSONdata["tempf"] = tempF;
+  JSONdata["tempc"] = tempC;
+  JSONdata["humidity"] = humidity;
+  JSONdata["pressure"] = pressure;
+  JSONdata["altitude_ft"] = altitudeFeet;
+  JSONdata["altitude_m"] = altitudeMeters;
+  JSONdata["time"] = millis()/1000;
+
+  char JSONmessageBuffer[300];
+  JSONdata.prettyPrintTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
+  Serial.println(JSONmessageBuffer);
   
   // Now connect to Frozen Creek Weather, and post our data:
-  WiFiClient client;
-  const int httpPort = 80;
-  if (!client.connect(ServerHost, httpPort)) 
-  {
-    // If we fail to connect, return 0.
-    return 0;
-  }
-  // If we successfully connected, print our server post:
-  client.print(postData(data));
+  HTTPClient http;
+  String serverUrl = String(ServerHost) + ":" + String(httpPort) + "/api/weather";
+  http.begin(serverUrl);
+  http.addHeader("Content-Type", "application/json");
+  
+  // POST the JSON encoded data in the JSON message buffer and initialize response variable
+  int response = http.POST(JSONmessageBuffer);
+  // Response payload as String
+  String payload = http.getString();
+  
+  Serial.println(serverUrl);   //Print HTTP return code
 
-  // Read all the lines of the reply from server and print them to Serial
-  while(client.available()){
-    String line = client.readStringUntil('\r');
-    Serial.print(line); // Trying to avoid using serial
-  }
+  Serial.println(response);   //Print HTTP return code
+  Serial.println(payload);    //Print request response payload
+
+  // Close connection
+  http.end();
 
   // Before we exit, turn the LED off.
   digitalWrite(LED_PIN, LOW);
 
   return 1; // Return success
-}
-
-String postData(String data)
-{  
-  String result = "";
-  result += "POST /weather/input.php HTTP/1.1\n";
-  result += "Host: " + String(ServerHost) + "\n";
-  result += "Connection: close\n";
-  result += "Content-Type: application/x-www-form-urlencoded\n";
-  result += "Content-Length: " + String(data.length()) + "\n\n";
-  result += data;
-  Serial.println(result);
-  return result;
 }
 
 void printSensorData()
