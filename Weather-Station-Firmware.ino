@@ -41,8 +41,7 @@ const int DIGITAL_PIN = 12; // Digital pin to be read
 /////////////////
 // Server info //
 /////////////////
-//const char ServerHost[] = "frozencreeks.com";
-const char ServerHost[] = "http://10.0.0.9";
+const char ServerHost[] = "http://"; // IP address or URL
 const int httpPort = 3000;
 
 /////////////////
