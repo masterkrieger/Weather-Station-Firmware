@@ -1,3 +1,10 @@
+/*
+ Weather Station Firmware
+ Author: Jeremy Barr
+ Created: Dec 28, 2018
+ Version: 1.1
+*/
+
 // Include the ESP8266 WiFi library. (Works a lot like the
 // Arduino WiFi library.)
 #include <ESP8266WiFi.h>
@@ -19,7 +26,7 @@
 ADC_MODE(ADC_VCC);  // Allows voltage read on pin VCC
 BME280 mySensor;
 
-char firmwareVer[] = "1.0.0"; // Software version installed
+char firmwareVer[] = "1.1.0"; // Software version installed
 
 float tempC = 0;
 float tempF = 0;
@@ -34,6 +41,7 @@ float voltage = 0;
 //////////////////////
 const char WiFiSSID[] = "";
 const char WiFiPSK[] = "";
+const char WiFiHostname = "Weather Station 1";
 
 /////////////////////
 // Pin Definitions //
@@ -47,6 +55,12 @@ const int DIGITAL_PIN = 12; // Digital pin to be read
 /////////////////
 const char ServerHost[] = "http://##.##.##.##";
 const int httpPort = 3000;
+
+// Static IP settings
+IPAddress staticIP(10,0,0,41); //static IP address
+IPAddress gateway(10,0,0,1);   //Router's IP address
+IPAddress subnet(255, 255, 255, 0);
+IPAddress dns(8, 8, 8, 8);
 
 /////////////////
 // Post Timing //
@@ -98,7 +112,14 @@ void loop()
 void connectWiFi()
 {
   byte ledStatus = LOW;
-
+  
+  // DHCP Hostname
+  WiFi.hostname(WiFiHostname);
+  
+  if (!WiFi.config(staticIP, gateway, subnet, primaryDNS, secondaryDNS)) {
+    Serial.println("STA Failed to configure");
+  }
+  
   // Set WiFi mode to station (as opposed to AP or AP_STA)
   WiFi.mode(WIFI_STA);
 
