@@ -50,9 +50,9 @@ float voltage = 0;
 //////////////////////
 // WiFi Definitions //
 //////////////////////
-const char WiFiSSID[] = "FrozenCreek";
-const char WiFiPSK[] = "9d691a2c01";
-const char* WiFiHostname = "Weather Station 1";
+const char WiFiSSID[] = "";
+const char WiFiPSK[] = "";
+const char WiFiHostname = "Weather Station 1";
 
 /////////////////////
 // Battery Voltage //
@@ -115,13 +115,14 @@ void loop()
 void connectWiFi()
 {
   byte ledStatus = HIGH; // HIGH=OFF, LOW=ON
-  
+
   // DHCP Hostname
   WiFi.hostname(WiFiHostname);
   
   if (!WiFi.config(staticIP, gateway, subnet, primaryDNS, secondaryDNS)) {
     Serial.println("STA Failed to configure");
   }
+
   // Set WiFi mode to station (as opposed to AP or AP_STA)
   WiFi.mode(WIFI_STA);
 
