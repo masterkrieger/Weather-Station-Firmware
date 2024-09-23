@@ -1,9 +1,26 @@
 # Weather Station Firmware
 
-Firmware for the ESP8266 Thing to collect weather data in real time.
-https://www.sparkfun.com/products/13711
+## WeMOS LOLIN D1 mini
+The hookup guide for the WeMOS D1 Mini.
+https://www.wemos.cc/en/latest/d1/d1_mini.html
 
-The hookup guide for the ESP8266 Thing.
-https://learn.sparkfun.com/tutorials/esp8266-thing-development-board-hookup-guide/all
+### Pinout
+220 kΩ resistor - A0 to GND
+Deep sleep jumper - D0 to RST (remove for programming)
 
-Configure the ESP8266 Thing for deepSleep functionality based on the hookup guide above.
+| BME280 SPI Sensor | WEMOS |
+| ----------------- | ----- |
+| SDA               | D2    |
+| SCL               | D1    |
+| GND               | GND   |
+| VIN               | 3V3   |
+
+## WiFi Credentials
+
+Create a `WiFiCredentials.h` header file with the following lines to include your protected Wifi Credentials.
+
+`WiFiCredentials.h`
+```
+#define SSID myssidwhatever
+#define PASSWORD mypassword
+```

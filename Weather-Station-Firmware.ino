@@ -27,6 +27,9 @@
 #include "Wire.h"
 #include "SPI.h"
 
+// Wifi Credentials
+#include "WifiCredentials.h"
+
 char firmwareVer[] = "1.2.1"; // Firmware version installed
 
 //////////////////////////
@@ -50,8 +53,8 @@ float voltage = 0;
 //////////////////////
 // WiFi Definitions //
 //////////////////////
-const char WiFiSSID[] = "";
-const char WiFiPSK[] = "";
+const char WiFiSSID[] = SSID;
+const char WiFiPSK[] = SSIDPASSWORD;
 const char WiFiHostname = "Weather Station 1";
 
 /////////////////////
@@ -66,7 +69,6 @@ const float TEMPC_CORRECTION = 6.414402;
 /////////////////
 // Server info //
 /////////////////
-//const char ServerHost[] = "frozencreeks.com";
 const char ServerHost[] = "http://10.0.0.102";
 const int httpPort = 3000;
 
@@ -282,9 +284,7 @@ int postToServer()
   String postedID = "WeMos-" + macID; // macID = F833
 
   //Declaring static JSON buffer
-  //StaticJsonBuffer<300> JSONbuffer; // arduinojson 5
   StaticJsonDocument<256> JSONbuffer;
-  //JsonObject& JSONdata = JSONbuffer.createObject(); // arduinojson 5
   JsonObject JSONdata = JSONbuffer.to<JsonObject>();
 
   // Build the JSON data by adding the field/value pairs defined by our stream:
@@ -299,9 +299,7 @@ int postToServer()
   JSONdata["firmware_version"] = firmwareVer;
   JSONdata["battery"] = voltage;
 
-  char JSONmessageBuffer[256]; // arduinojson 5
-  //JSONdata.prettyPrintTo(JSONmessageBuffer, sizeof(JSONmessageBuffer)); // arduinojson 5
-  //serializeJsonPretty(JSONdata, Serial);
+  char JSONmessageBuffer[256];
   serializeJsonPretty(JSONdata,JSONmessageBuffer);
   Serial.println(JSONmessageBuffer);
 
